@@ -1,5 +1,6 @@
-#define ECHO_TO_SERIAL 1
-#define DEBUG
+// TO DO : Check for "ok" string in web response
+
+#include "WiFridgeCC3000Config.h"
 
 #include <Adafruit_CC3000.h>
 #include <ccspi.h>
@@ -7,7 +8,7 @@
 
 #include <SPI.h>
 #include <PString.h>
-//#include <avr/wdt.h>
+#include <avr/wdt.h>
 
 // For DS18B20 temp sensor
 #include <OneWire.h>
@@ -15,16 +16,6 @@
 
 // For AM2302 temp & humidity sensor
 #include "DHT.h"
-
-//char API_EMONCMS_PRIV[33];
-//char HOST_EMONCMS_PRIV[33];
-//char API_EMONCMS_LOCAL[33];
-//char HOST_EMONCMS_LOCAL[17];
-
-#define API_EMONCMS_PRIV "youremoncmskey"
-#define HOST_EMONCMS_PRIV "your.emoncms.whatever"
-
-#define NODE 0
 
 PROGMEM char HTTP_OK[]="HTTP/1.1 200 OK";
 PROGMEM char EMON_CMS_OK[]="ok";
@@ -53,9 +44,6 @@ const int pinLedGreen=7;
 // Buffers & Strings
 char buf[16];
 String payLoad;
-
-//char payLoadBuf[255];
-//PString payLoad(payLoadBuf,sizeof(payLoadBuf));
 
 char floatBuf[8];
 int webErrCount=0;
@@ -120,7 +108,7 @@ void setup()
   {
     Serial.println(F("Waiting for DHCP..."));
     delay(100); // ToDo: Insert a DHCP timeout!
-    //ledBlink(pinLedYellow,3,100);
+    ledBlink(pinLedYellow,3,100);
   }  
 
   displayConnectionDetails();
@@ -143,13 +131,16 @@ void setup()
 
   Serial.println(F("End of setup"));
   Serial.println();
-  
+
+  wdt_enable(WDTO_8S);  
   ledBlink(pinLedGreen,3,100);
 }
 
 //=======================================================================================================
 void loop()
 {
+  wdt_reset();
+
   if(!lastTempRead || millis()-lastTempRead>minIntervalTempRead) {
 
     Serial.println(F("==== Start loop..."));
@@ -175,9 +166,7 @@ void loop()
     // -----------------------------------------------------------------------------------------------------
     // Getting temp & humidity from AM2302
     // -----------------------------------------------------------------------------------------------------
-    #if ECHO_TO_SERIAL
     Serial.println(F("    Reading AM2302 sensor..."));
-    #endif
     
     float h = dht.readHumidity();
     float t = dht.readTemperature();
@@ -256,37 +245,27 @@ void sendData2EmonCms(char *urlprefix,char host[],int port, char apikey[], Strin
   httpRequest.print(host);
   httpRequest.print("\r\n\r\n");
  
-  #if ECHO_TO_SERIAL
   Serial.println(F("\nDestination:"));
   Serial.print(ip); Serial.print("/");cc3000.printIPdotsRev(ip); Serial.print(F(":")); Serial.println(port);
   Serial.print(F("\nHTTP Request: "));
   Serial.println(httpRequestBuf);
-  #endif
   
   Serial.println(F("\n    Connecting"));
   unsigned long sendStart=millis();
   digitalWrite(pinLedYellow, HIGH);
   Adafruit_CC3000_Client www = cc3000.connectTCP(ip, port);
   if (www.connected()) {
-
-    #if ECHO_TO_SERIAL
     Serial.println(F("    Sending"));
-    #endif
-
     www.fastrprint(httpRequestBuf);
     www.println();
   }
   else {
-    #if ECHO_TO_SERIAL
     Serial.println(F("    Could not even connect..."));
-    #endif
     allLedBlink(5,50);
     webErrCount++;
   }    
     
-  #if ECHO_TO_SERIAL
   Serial.println(F("    Processing Answer"));
-  #endif
     
   unsigned long timeout  = 3000;
   unsigned long lastRead = millis();

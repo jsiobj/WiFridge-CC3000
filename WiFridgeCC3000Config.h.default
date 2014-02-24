@@ -1,0 +1,8 @@
+// WiFridge private configuration
+
+// EmonCMS connection details
+const char API_EMONCMS_PRIV[]="youremoncmskey";
+const char[] HOST_EMONCMS_PRIV[]="your.emoncms.whatever";
+
+// EmonCMS node number
+int NODE=0;
