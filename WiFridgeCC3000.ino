@@ -87,6 +87,7 @@ void setup()
 
   // -----------------------------------------------------------------------------------------------------
   // Start Wifi - CC3000 was configured using SmartConfig
+  // More info here : https://learn.adafruit.com/adafruit-cc3000-wifi/smartconfigtest
   // -----------------------------------------------------------------------------------------------------
   Serial.println(F("\nInitializing Wifi..."));
   if (!cc3000.begin(false, true))
